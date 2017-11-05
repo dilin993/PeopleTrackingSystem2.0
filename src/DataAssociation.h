@@ -36,6 +36,8 @@ private:
     double averageError(Point a, Point b);
     double averageError(Point a, Point b,MatND hisA,MatND histB);
     double sigma_propagate[NUM_STATES]={10.0, 10.0, 1.0, 1.0};
+    double var_m=0.5;
+    double alpha = 0.4;
 };
 
 

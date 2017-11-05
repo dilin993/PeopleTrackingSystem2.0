@@ -33,16 +33,16 @@ std::vector<cv::Rect> BGSDetector::detect(cv::Mat &img)
     cv::dilate(imgThresh, imgThresh, structuringElement7x7);
     cv::erode(imgThresh, imgThresh, structuringElement3x3);
     */
-
-    cv::dilate(mask, mask, structuringElement);
-    cv::dilate(mask, mask, structuringElement);
-    cv::erode(mask, mask, structuringElement);
+    cv::Mat maskPost;
+    cv::dilate(mask,maskPost, structuringElement);
+    cv::dilate(maskPost, maskPost, structuringElement);
+    cv::erode(maskPost, maskPost, structuringElement);
 
 
 
     std::vector<std::vector<cv::Point> > contours;
 
-    cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+    cv::findContours(maskPost, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
     std::vector<std::vector<cv::Point> > convexHulls(contours.size());
 
@@ -82,7 +82,7 @@ std::vector<cv::Rect> BGSDetector::detect(cv::Mat &img)
             r.y += cvRound(r.height*0.07);
             r.height = cvRound(r.height*0.8);
             detections.push_back(r);
-            histograms.push_back(getHistogram(img,r,mask));
+            histograms.push_back(getHistogram(img,r));//,mask));
         }
 
     }
