@@ -1,0 +1,11 @@
+cmake-build-debug/*
+CMakeCache.txt
+CMakeFiles/*
+cmake_install.cmake
+Makefile
+track
+.cproject
+.idea/*
+.project
+.settings/*
+*.csv
