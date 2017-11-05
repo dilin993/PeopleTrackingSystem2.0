@@ -5,6 +5,7 @@
 #ifndef TRACK_BGSDETECTOR_H
 #define TRACK_BGSDETECTOR_H
 #include <opencv2/opencv.hpp>
+#include <opencv2/bgsegm.hpp>
 #include "Detector.h"
 
 class Blob {

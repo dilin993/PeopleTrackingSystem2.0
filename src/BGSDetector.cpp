@@ -9,20 +9,22 @@ std::vector<cv::Rect> BGSDetector::detect(cv::Mat &img)
     std::vector<cv::Rect> found,detections;
     histograms.clear();
 
-    for(int i=2;i>0;i--)
-    {
-        frames[i] = frames[i-1].clone();
-    }
-    frames[0] = img.clone();
+    pMOG2->apply(img,mask);
 
-    if(frameCount<3)
-    {
-        frameCount++;
-        return detections;
-    }
-
-    backgroundSubstraction(frames[0],frames[1],frames[2],
-                           bgModel,mask,TH);
+//    for(int i=2;i>0;i--)
+//    {
+//        frames[i] = frames[i-1].clone();
+//    }
+//    frames[0] = img.clone();
+//
+//    if(frameCount<3)
+//    {
+//        frameCount++;
+//        return detections;
+//    }
+//
+//    backgroundSubstraction(frames[0],frames[1],frames[2],
+//                           bgModel,mask,TH);
 
 //    cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
 //    cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
@@ -54,14 +56,14 @@ std::vector<cv::Rect> BGSDetector::detect(cv::Mat &img)
     for (auto &convexHull : convexHulls) {
         Blob possibleBlob(convexHull);
 
-        if (possibleBlob.currentBoundingRect.area() > 100 &&
+        if (possibleBlob.currentBoundingRect.area() > 5000 &&
             possibleBlob.dblCurrentAspectRatio >= 0.2 &&
             possibleBlob.dblCurrentAspectRatio <= 1.25 &&
-            possibleBlob.currentBoundingRect.width > 20 &&
-            possibleBlob.currentBoundingRect.height > 20 &&
+            possibleBlob.currentBoundingRect.width > 30 &&
+            possibleBlob.currentBoundingRect.height > 40 &&
             possibleBlob.dblCurrentDiagonalSize > 30.0 &&
             (cv::contourArea(possibleBlob.currentContour) /
-             (double)possibleBlob.currentBoundingRect.area()) > 0.40)
+             (double)possibleBlob.currentBoundingRect.area()) > 0.45)
         {
             found.push_back(possibleBlob.currentBoundingRect);
         }
@@ -111,13 +113,14 @@ void BGSDetector::backgroundSubstraction(cv::Mat &frame0, cv::Mat &frame1, cv::M
     absdiff(frame0g,bgModel,diff);
 
     threshold(diff,mask,TH,255,cv::THRESH_BINARY);
+
 }
 
 BGSDetector::BGSDetector(double TH) :
 TH(TH)
 {
     frameCount = 0;
-    pMOG2 = cv::createBackgroundSubtractorMOG2(10);
+    pMOG2 = cv::bgsegm::createBackgroundSubtractorMOG();
 }
 
 Blob::Blob(std::vector<cv::Point> _contour)
