@@ -46,6 +46,8 @@ private:
     double TH;
     int t=0;
     cv::Ptr<cv::BackgroundSubtractor> pMOG2; //MOG2 Background subtractor
+    void GammaCorrection(cv::Mat& src, cv::Mat& dst, float fGamma);
+    int bgSteps=0;
 };
 
 
