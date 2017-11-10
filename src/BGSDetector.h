@@ -5,6 +5,7 @@
 #ifndef TRACK_BGSDETECTOR_H
 #define TRACK_BGSDETECTOR_H
 #include <opencv2/opencv.hpp>
+#include <opencv2/bgsegm.hpp>
 #include "Detector.h"
 
 class Blob {
@@ -45,6 +46,8 @@ private:
     double TH;
     int t=0;
     cv::Ptr<cv::BackgroundSubtractor> pMOG2; //MOG2 Background subtractor
+    void GammaCorrection(cv::Mat& src, cv::Mat& dst, float fGamma);
+    int bgSteps=0;
 };
 
 

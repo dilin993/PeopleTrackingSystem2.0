@@ -7,7 +7,14 @@
 std::vector<cv::Rect> BGSDetector::detect(cv::Mat &img)
 {
     std::vector<cv::Rect> found,detections;
+
+//    GammaCorrection(img,img,2.0);
+
     histograms.clear();
+
+//    pMOG2->apply(img,mask);
+
+
 
     for(int i=2;i>0;i--)
     {
@@ -24,6 +31,8 @@ std::vector<cv::Rect> BGSDetector::detect(cv::Mat &img)
     backgroundSubstraction(frames[0],frames[1],frames[2],
                            bgModel,mask,TH);
 
+    cv::imshow("BackSub",mask);
+
 //    cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
 //    cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
     cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
@@ -33,16 +42,28 @@ std::vector<cv::Rect> BGSDetector::detect(cv::Mat &img)
     cv::dilate(imgThresh, imgThresh, structuringElement7x7);
     cv::erode(imgThresh, imgThresh, structuringElement3x3);
     */
-
-    cv::dilate(mask, mask, structuringElement);
-    cv::dilate(mask, mask, structuringElement);
-    cv::erode(mask, mask, structuringElement);
+    cv::Mat maskPost;
+    cv::dilate(mask,maskPost, structuringElement);
+    cv::dilate(maskPost, maskPost, structuringElement);
+    cv::erode(maskPost, maskPost, structuringElement);
 
 
 
     std::vector<std::vector<cv::Point> > contours;
 
-    cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+    cv::findContours(maskPost, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+    cv::Mat shape = cv::Mat::zeros(mask.size(),CV_8UC1);
+
+
+
+    for(int i = 0; i < contours.size(); i++)
+    {
+        cv::Scalar color(255, 255, 255);
+        drawContours(shape, contours, i, color, CV_FILLED);
+    }
+
+    cv::imshow("Shape",shape);
 
     std::vector<std::vector<cv::Point> > convexHulls(contours.size());
 
@@ -51,17 +72,18 @@ std::vector<cv::Rect> BGSDetector::detect(cv::Mat &img)
         cv::convexHull(contours[i], convexHulls[i]);
     }
 
+
     for (auto &convexHull : convexHulls) {
         Blob possibleBlob(convexHull);
 
-        if (possibleBlob.currentBoundingRect.area() > 100 &&
+        if (possibleBlob.currentBoundingRect.area() > 5000 &&
             possibleBlob.dblCurrentAspectRatio >= 0.2 &&
             possibleBlob.dblCurrentAspectRatio <= 1.25 &&
-            possibleBlob.currentBoundingRect.width > 20 &&
-            possibleBlob.currentBoundingRect.height > 20 &&
+            possibleBlob.currentBoundingRect.width > 30 &&
+            possibleBlob.currentBoundingRect.height > 40 &&
             possibleBlob.dblCurrentDiagonalSize > 30.0 &&
             (cv::contourArea(possibleBlob.currentContour) /
-             (double)possibleBlob.currentBoundingRect.area()) > 0.40)
+             (double)possibleBlob.currentBoundingRect.area()) > 0.5)
         {
             found.push_back(possibleBlob.currentBoundingRect);
         }
@@ -82,7 +104,7 @@ std::vector<cv::Rect> BGSDetector::detect(cv::Mat &img)
             r.y += cvRound(r.height*0.07);
             r.height = cvRound(r.height*0.8);
             detections.push_back(r);
-            histograms.push_back(getHistogram(img,r,mask));
+            histograms.push_back(getHistogram(img,r,shape));
         }
 
     }
@@ -107,9 +129,17 @@ void BGSDetector::backgroundSubstraction(cv::Mat &frame0, cv::Mat &frame1, cv::M
 
     bgModel = 0.1*frame0g + 0.2*frame1g + 0.7*frame2g;
 
+//    if(bgSteps < 60)
+//    {
+//        bgModel = 0.1*frame0g + 0.2*frame1g + 0.7*frame2g;
+//        bgSteps++;
+//    }
+//    else
+//    {
+//
+//    }
     cv::Mat diff;
     absdiff(frame0g,bgModel,diff);
-
     threshold(diff,mask,TH,255,cv::THRESH_BINARY);
 }
 
@@ -117,7 +147,54 @@ BGSDetector::BGSDetector(double TH) :
 TH(TH)
 {
     frameCount = 0;
-    pMOG2 = cv::createBackgroundSubtractorMOG2(10);
+    pMOG2 = cv::bgsegm::createBackgroundSubtractorMOG();
+}
+
+void BGSDetector::GammaCorrection(cv::Mat &src, cv::Mat &dst, float fGamma)
+{
+    CV_Assert(src.data);
+
+    // accept only char type matrices
+    CV_Assert(src.depth() != sizeof(uchar));
+
+    // build look up table
+    unsigned char lut[256];
+    for (int i = 0; i < 256; i++)
+    {
+        lut[i] = cv::saturate_cast<uchar>(pow((float)(i / 255.0), fGamma) * 255.0f);
+    }
+
+    dst = src.clone();
+    const int channels = dst.channels();
+    switch (channels)
+    {
+        case 1:
+        {
+
+            cv::MatIterator_<uchar> it, end;
+            for (it = dst.begin<uchar>(), end = dst.end<uchar>(); it != end; it++)
+                //*it = pow((float)(((*it))/255.0), fGamma) * 255.0;
+                *it = lut[(*it)];
+
+            break;
+        }
+        case 3:
+        {
+
+            cv::MatIterator_<cv::Vec3b> it, end;
+            for (it = dst.begin<cv::Vec3b>(), end = dst.end<cv::Vec3b>(); it != end; it++)
+            {
+
+                (*it)[0] = lut[((*it)[0])];
+                (*it)[1] = lut[((*it)[1])];
+                (*it)[2] = lut[((*it)[2])];
+            }
+
+            break;
+
+        }
+    }
+
 }
 
 Blob::Blob(std::vector<cv::Point> _contour)

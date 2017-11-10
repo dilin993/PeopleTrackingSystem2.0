@@ -1,4 +1,5 @@
 #include <iostream>
+#include <ctime>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/ocl.hpp>
 #include "DataAssociation.h"
@@ -8,11 +9,24 @@ using namespace std;
 using  namespace cv;
 
 
-#define TRACK_INIT_TH 200.0
-#define REJ_TOL 100
+#define TRACK_INIT_TH 0.8
+#define REJ_TOL 120
 #define WIDTH 640
 #define HEIGHT 480
 
+string getTimeStr()
+{
+    time_t rawtime;
+    struct tm * timeinfo;
+    char buffer[80];
+
+    time (&rawtime);
+    timeinfo = localtime(&rawtime);
+
+    strftime(buffer,sizeof(buffer),"%d-%m-%Y-%I-%M",timeinfo);
+    std::string str(buffer);
+    return str;
+}
 
 
 
@@ -21,6 +35,15 @@ int main(int argc, const char * argv[])
     VideoCapture cap;
     Detector *detector = new BGSDetector();
     DataAssociation A(TRACK_INIT_TH, REJ_TOL,WIDTH,HEIGHT);
+
+//    VideoWriter imgWriter;
+//    int ex = CV_FOURCC('X','2','6','4');//static_cast<int>(cap1.get(CV_CAP_PROP_FOURCC));
+//    Size S = Size(WIDTH,HEIGHT);
+//    int FPS = 25;
+//    string path = "/home/dilin/Videos/Tracking/";
+//    path += getTimeStr();
+//    path += ".avi";
+//    imgWriter.open(path,ex,FPS,S);
 
     if(argc<2)
     {
@@ -73,7 +96,11 @@ int main(int argc, const char * argv[])
         }
 
         imshow("video capture", img);
+//        imgWriter << img;
         if (waitKey(20) >= 0)
             break;
     }
+
+//    imgWriter.release();
+    return 0;
 }

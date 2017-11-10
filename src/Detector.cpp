@@ -45,7 +45,7 @@ cv::MatND Detector::getHistogram(cv::Mat img, cv::Rect region, cv::Mat mask)
     // cv::cvtColor(rgb_base, hsv_base, cv::COLOR_BGR2HSV);
 
     cv::MatND hist_base;
-    /// Using 50 bins for hue and 60 for saturation
+    /// Using 8bins for R,G,B
     int histSize[] = { 8, 8, 8 };
 
     // hue varies from 0 to 179, saturation,rgb from 0 to 255
@@ -65,15 +65,6 @@ cv::MatND Detector::getHistogram(cv::Mat img, cv::Rect region, cv::Mat mask)
 
     calcHist( images, 1, channels, shape, hist_base, 3, histSize, ranges, true, false );
 
-
-    cv::FileStorage file("../hist.ext", cv::FileStorage::WRITE);
-    file << "histogram" << hist_base;
-    file << "bbox" << region;
-
-    cv::imwrite("../image.jpg",img);
-    cv::imwrite("../mask.jpg",mask);
-
-    file.release();
 
     normalize( hist_base, hist_base, 0, 1, cv::NORM_MINMAX, -1, cv::Mat() );
 
