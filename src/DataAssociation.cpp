@@ -65,6 +65,14 @@ void DataAssociation::assignTracks(vector<Point> detections,
         }
     }
 
+    vector<bool> hasAssigned;
+
+    // initialize hasAssigned to false
+    for(int j=0;j<tracks.size();j++)
+    {
+        hasAssigned.push_back(false);
+    }
+
 
     // data association using hungarian algorithm
     if(costMat.size()>0)
@@ -72,13 +80,6 @@ void DataAssociation::assignTracks(vector<Point> detections,
         HungarianAlgorithm hungarianAlgorithm;
         vector<int> assignment;
         double cost = hungarianAlgorithm.Solve(costMat,assignment);
-        vector<bool> hasAssigned;
-
-        // initialize hasAssigned to false
-        for(int j=0;j<tracks.size();j++)
-        {
-            hasAssigned.push_back(false);
-        }
 
         // assign detections
         for(int i=0;i<assignment.size();i++)
@@ -90,37 +91,36 @@ void DataAssociation::assignTracks(vector<Point> detections,
                 hasAssigned[j] = true;
             }
         }
+    }
 
-        // delete unnecessary tracks
-        cout << "current tracks: " << endl;
-        for(int j=0;j<tracks.size();j++)
+    // delete unnecessary tracks
+    cout << "current tracks: " << endl;
+    for(int j=0;j<tracks.size();j++)
+    {
+        tracks[j].updateAssociation(hasAssigned[j]);
+        State state = tracks[j].getState();
+        double v = sqrt(pow(state.vx,2.0)+pow(state.vy,2.0));
+        cout << "[" << j << "]";
+        cout << "\tx=" << state.x;
+        cout << " y=" << state.y;
+        cout << " vx=" << state.vx;
+        cout << " vy=" << state.vy;
+        cout << " v=" << v;
+        cout << " assigned=" << hasAssigned[j] << endl;
+
+        if(v>VEL_TH ||
+           state.x > WIDTH ||
+           state.y > HEIGHT ||
+           state.x < 0 ||
+           state.y < 0 ||
+           tracks[j].consectiveInvisibleCount > REJ_TOL)
         {
-            tracks[j].updateAssociation(hasAssigned[j]);
-            State state = tracks[j].getState();
-            double v = sqrt(pow(state.vx,2.0)+pow(state.vy,2.0));
-            cout << "[" << j << "]";
-            cout << "\tx=" << state.x;
-            cout << " y=" << state.y;
-            cout << " vx=" << state.vx;
-            cout << " vy=" << state.vy;
-            cout << " v=" << v;
-            cout << " assigned=" << hasAssigned[j] << endl;
-
-            if(v>VEL_TH ||
-                    state.x > WIDTH ||
-                    state.y > HEIGHT ||
-                    state.x < 0 ||
-                    state.y < 0 ||
-               tracks[j].consectiveInvisibleCount > REJ_TOL)
-            {
-                cout << "deleted track : " << j << " , size : " << tracks.size() << endl;
-                //Tracker *tr = tracks[j];
-                tracks.erase(tracks.begin()+j);
-                //delete tr;
-                j--;
-            }
+            cout << "deleted track : " << j << " , size : " << tracks.size() << endl;
+            //Tracker *tr = tracks[j];
+            tracks.erase(tracks.begin()+j);
+            //delete tr;
+            j--;
         }
-
     }
 }
 

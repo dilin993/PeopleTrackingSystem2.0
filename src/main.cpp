@@ -9,8 +9,8 @@ using namespace std;
 using  namespace cv;
 
 
-#define TRACK_INIT_TH 0.9
-#define REJ_TOL 30
+#define TRACK_INIT_TH 0.8
+#define REJ_TOL 120
 #define WIDTH 640
 #define HEIGHT 480
 
@@ -36,14 +36,14 @@ int main(int argc, const char * argv[])
     Detector *detector = new BGSDetector();
     DataAssociation A(TRACK_INIT_TH, REJ_TOL,WIDTH,HEIGHT);
 
-    VideoWriter imgWriter;
-    int ex = CV_FOURCC('X','2','6','4');//static_cast<int>(cap1.get(CV_CAP_PROP_FOURCC));
-    Size S = Size(WIDTH,HEIGHT);
-    int FPS = 25;
-    string path = "/home/dilin/Videos/Tracking/";
-    path += getTimeStr();
-    path += ".avi";
-    imgWriter.open(path,ex,FPS,S);
+//    VideoWriter imgWriter;
+//    int ex = CV_FOURCC('X','2','6','4');//static_cast<int>(cap1.get(CV_CAP_PROP_FOURCC));
+//    Size S = Size(WIDTH,HEIGHT);
+//    int FPS = 25;
+//    string path = "/home/dilin/Videos/Tracking/";
+//    path += getTimeStr();
+//    path += ".avi";
+//    imgWriter.open(path,ex,FPS,S);
 
     if(argc<2)
     {
@@ -96,11 +96,11 @@ int main(int argc, const char * argv[])
         }
 
         imshow("video capture", img);
-        imgWriter << img;
+//        imgWriter << img;
         if (waitKey(20) >= 0)
             break;
     }
 
-    imgWriter.release();
+//    imgWriter.release();
     return 0;
 }
