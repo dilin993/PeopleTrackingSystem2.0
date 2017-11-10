@@ -10,8 +10,8 @@ using  namespace cv;
 
 #define TRACK_INIT_TH 200.0
 #define REJ_TOL 100
-#define WIDTH 360
-#define HEIGHT 288
+#define WIDTH 640
+#define HEIGHT 480
 
 
 
@@ -19,7 +19,7 @@ using  namespace cv;
 int main(int argc, const char * argv[])
 {
     VideoCapture cap;
-    Detector *detector = new HOGDetector();
+    Detector *detector = new BGSDetector();
     DataAssociation A(TRACK_INIT_TH, REJ_TOL,WIDTH,HEIGHT);
 
     if(argc<2)
